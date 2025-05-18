@@ -1,0 +1,6 @@
+@sendbol_videoshop.Server_HostAddress = http://localhost:5287
+
+GET {{sendbol_videoshop.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

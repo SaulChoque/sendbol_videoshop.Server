@@ -1,0 +1,55 @@
+# Archivos y carpetas de compilación
+bin/
+obj/
+out/
+
+# Archivos de usuario y configuración local de Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de configuración de Rider/JetBrains
+.idea/
+*.sln.iml
+
+# Archivos de logs y temporales
+*.log
+
+# Archivos de publicación
+publish/
+*.publish.xml
+
+# Certificados de desarrollo
+*.pfx
+*.p12
+
+# Archivos de dependencias NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Archivos de configuración de entorno
+.env
+
+# Archivos generados por herramientas de test
+TestResults/
+coverage/
+
+# Archivos de configuración de usuario de VS Code
+.vscode/
+
+# Archivos de backup
+*~
+*.bak
+*.tmp
+
+# Archivos de configuración de Docker
+docker-compose.override.yml
+
+# Archivos de configuración de IIS Express
+.vsconfig
