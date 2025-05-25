@@ -21,10 +21,15 @@ builder.Services.AddHttpClient();
 builder.Services.Configure<MongoVideoshopDatabaseSettings>(
     builder.Configuration.GetSection("VideoshopDatabase"));
 
-builder.Services.AddSingleton<UsuariosService>();
-
 builder.Services.Configure<RedisVideoshopDatabaseSettings>(
     builder.Configuration.GetSection("RedisConnection"));
+
+builder.Services.AddSingleton<UsuariosService>();
+builder.Services.AddSingleton<ProductosService>();
+builder.Services.AddSingleton<CategoriasService>();
+builder.Services.AddSingleton<ChiptagsService>();
+builder.Services.AddSingleton<PlataformasService>();
+
 
 builder.Services.AddSingleton<CountriesService>();
 
@@ -56,7 +61,7 @@ var app = builder.Build();
 
 
 app.UseCors(options =>
-options.WithOrigins("https://localhost:54993")
+options.WithOrigins("https://localhost:54993","http://localhost:54993")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials() // <-- Esto es necesario

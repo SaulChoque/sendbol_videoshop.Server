@@ -7,5 +7,11 @@ public class MongoVideoshopDatabaseSettings
     public string DatabaseName { get; set; } = null!;
 
     public string UsuariosCollectionName { get; set; } = null!;
+    public string ProductosCollectionName { get; set; } = null!;
+
+    
+    public string CategoriasCollectionName { get; set; } = null!;
+    public string ChiptagsCollectionName { get; set; } = null!;
+    public string PlataformasCollectionName { get; set; } = null!;
 }
 

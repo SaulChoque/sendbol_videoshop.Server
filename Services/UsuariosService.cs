@@ -61,7 +61,82 @@ namespace sendbol_videoshop.Server.Services
                 .FirstOrDefaultAsync();
         }
 
-// ...existing code...
+        // ...existing code...
+
+        // Método para actualizar o agregar un like (ProdInfoItem) en la lista de un usuario
+        public async Task<bool> UpdateProdInfoAsync(string usuarioId, ProdInfoItem prodInfoItem, string accion)
+        {
+            // Crea un filtro para buscar el usuario por su Id en la base de datos
+            var filter = Builders<Usuario>.Filter.Eq(u => u.Id, usuarioId);
+        
+            // Busca el usuario en la colección usando el filtro
+            var usuario = await _usuariosCollection.Find(filter).FirstOrDefaultAsync();
+        
+            // Si no se encuentra el usuario, retorna false
+            if (usuario == null)
+                return false;
+        
+            // Busca el índice del producto en la lista ProdInfo del usuario
+            var index = usuario.ProdInfo.FindIndex(p => p.IdProd == prodInfoItem.IdProd);
+        
+            if (index >= 0)
+            {
+                // Si el producto ya existe, actualiza según la acción recibida
+                switch (accion.ToLower())
+                {
+                    case "like":
+                        // Marca el producto como 'like' (Status = 1)
+                        usuario.ProdInfo[index].Status = 1;
+                        break;
+                    case "dislike":
+                        // Marca el producto como 'dislike' (Status = 0)
+                        usuario.ProdInfo[index].Status = 0;
+                        break;
+                    case "rating":
+                        // Actualiza el ranking del producto
+                        usuario.ProdInfo[index].Ranking = prodInfoItem.Ranking;
+                        break;
+                    default:
+                        // Si la acción no es reconocida, retorna false
+                        return false;
+                }
+            }
+            else
+            {
+                // Si el producto no existe en la lista, lo agrega según la acción
+                switch (accion.ToLower())
+                {
+                    case "like":
+                        // Asigna Status = 1 y agrega el producto
+                        prodInfoItem.Status = 1;
+                        usuario.ProdInfo.Add(prodInfoItem);
+                        break;
+                    case "dislike":
+                        // Asigna Status = 0 y agrega el producto
+                        prodInfoItem.Status = 0;
+                        usuario.ProdInfo.Add(prodInfoItem);
+                        break;
+                    case "rating":
+                        // Agrega el producto con el ranking recibido
+                        usuario.ProdInfo.Add(prodInfoItem);
+                        break;
+                    default:
+                        // Si la acción no es reconocida, retorna false
+                        return false;
+                }
+            }
+        
+            // Prepara la actualización para guardar la lista modificada en la base de datos
+            var update = Builders<Usuario>.Update.Set(u => u.ProdInfo, usuario.ProdInfo);
+        
+            // Ejecuta la actualización en la base de datos
+            var result = await _usuariosCollection.UpdateOneAsync(filter, update);
+        
+            // Retorna true si se modificó algún documento, false en caso contrario
+            return result.ModifiedCount > 0;
+        }
+        // ...existing code...
+
 
 
     }

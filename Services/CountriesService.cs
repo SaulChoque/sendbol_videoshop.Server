@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using NRedisStack;
 using StackExchange.Redis;
+using System.Text.Json;
 
 namespace sendbol_videoshop.Server.Services
 {
@@ -21,6 +22,41 @@ namespace sendbol_videoshop.Server.Services
 
             // Obtiene la base de datos Redis
             _redisDatabase = redis.GetDatabase();
+        }
+                // ...código existente...
+        
+        // Nuevo método para obtener países, consultar API si no hay en Redis
+        public async Task<List<string>> GetOrFetchAllCountriesAsync(IHttpClientFactory httpClientFactory)
+        {
+            var cachedCountries = await GetAllCountriesAsync();
+            if (cachedCountries.Any())
+            {
+                return cachedCountries;
+            }
+        
+            // Si no existen datos, llamar a la API
+            var apiUrl = "https://restcountries.com/v3.1/all";
+            var httpClient = httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(apiUrl);
+            response.EnsureSuccessStatusCode();
+        
+            var countriesJson = await response.Content.ReadAsStringAsync();
+            var countries = JsonSerializer.Deserialize<List<Country>>(countriesJson, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        
+            if (countries == null)
+            {
+                throw new Exception("Error al procesar los datos de la API.");
+            }
+        
+            foreach (var country in countries)
+            {
+                await AddCountryAsync(country);
+            }
+        
+            return countries.Select(c => c.CommonName).ToList();
         }
 
         // Método para agregar un país al hash utilizando el modelo Country
@@ -44,7 +80,7 @@ namespace sendbol_videoshop.Server.Services
         }
 
         // Método para obtener los datos de un país
-        public async Task<Dictionary<string, string>> GetCountryAsync(string countryCode)
+        public async Task<Dictionary<string, string>?> GetCountryAsync(string countryCode)
         {
             var hashKey = $"country:{countryCode}";
             var hashEntries = await _redisDatabase.HashGetAllAsync(hashKey);
@@ -58,6 +94,7 @@ namespace sendbol_videoshop.Server.Services
             );
         }
 
+    
         // Método para listar todos los países (solo nombres)
         public async Task<List<string>> GetAllCountriesAsync()
         {
