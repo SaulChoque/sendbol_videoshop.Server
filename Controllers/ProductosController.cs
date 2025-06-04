@@ -118,6 +118,21 @@ namespace sendbol_videoshop.Server.Controllers
 
 
 
+// ...existing code...
+
+        /// <summary>
+        /// Agrega un nuevo producto a la base de datos.
+        /// </summary>
+        [HttpPost]
+        public async Task<ActionResult<Producto>> AddProducto([FromBody] Producto producto)
+        {
+            var nuevoProducto = await _ProductosService.AddProductoAsync(producto);
+            return CreatedAtAction(nameof(GetById), new { id = nuevoProducto.Id }, nuevoProducto);
+        }
+
+// ...existing code...
+
+
 
         /*
         // 8. Actualizar likes y dislikes

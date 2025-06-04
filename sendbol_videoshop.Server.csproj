@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <SpaRoot>..\sendbol_videoshop.client</SpaRoot>
     <SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://0.0.0.0:54993</SpaProxyServerUrl>
+    <SpaProxyServerUrl>https://localhost:54993</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>

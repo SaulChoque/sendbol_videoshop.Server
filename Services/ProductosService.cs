@@ -7,6 +7,8 @@ using System.Text.Json; // Agrega esta línea para usar Redis
 
 namespace sendbol_videoshop.Server.Services
 {
+    // ...existing code...
+
     public class ProductosService
     {
         // Colección de MongoDB que almacena documentos del tipo Usuario.
@@ -43,197 +45,112 @@ namespace sendbol_videoshop.Server.Services
         }
 
 
+        // ...existing code...
+
+        /// <summary>
+        /// Agrega un nuevo producto a la colección de MongoDB.
+        /// </summary>
+        /// <param name="producto">El producto a agregar.</param>
+        /// <returns>El producto agregado.</returns>
+        public async Task<Producto> AddProductoAsync(Producto producto)
+        {
+            await _productosCollection.InsertOneAsync(producto);
+            return producto;
+        }
+
+        // ...existing code...
+
+
 
 
 
         /// <summary>
         /// Método para obtener todos los productos de la colección.
-        /// Si no existen en Redis, los obtiene de MongoDB y los guarda en Redis.
+        /// Solo consulta MongoDB, no Redis.
         /// </summary>
         /// <returns>
-        /// Lista de productos obtenidos, ya sea de Redis o MongoDB.
+        /// Lista de productos obtenidos de MongoDB.
         /// </returns>
         public async Task<List<Producto>> GetAllAsync() =>
-
-            await GetOrFetchAllProductsAsync();
+            await _productosCollection.Find(_ => true).ToListAsync();
 
         /// <summary>
         /// Método para obtener todos los productos de la colección.
-        /// Si no existen en Redis, los obtiene de MongoDB y los guarda en Redis.
+        /// Solo consulta MongoDB, no Redis.
         /// </summary>
         /// <returns>
-        /// Lista de productos obtenidos, ya sea de Redis o MongoDB.
+        /// Lista de productos obtenidos de MongoDB.
         /// </returns>
         public async Task<List<Producto>> GetOrFetchAllProductsAsync()
         {
-            var cachedCountries = await GetAllProductsFromRedisAsync();
-
-            if (cachedCountries.Any())
-            {
-                return cachedCountries.ToList();
-            }
-
-            // Si no existen datos, llamar a mongoDB
-            await ClonarProductosMongoARedisAsync();
-            return _productosCollection.Find(_ => true).ToList();
-
+            return await _productosCollection.Find(_ => true).ToListAsync();
         }
 
+        // Elimina la función de clonar productos a Redis
+        // public async Task ClonarProductosMongoARedisAsync() { ... } // ELIMINADA
+
+        // Elimina la función de obtener productos desde Redis
+        // public async Task<List<Producto>> GetAllProductsFromRedisAsync() { ... } // ELIMINADA
 
         /// <summary>
-        /// Clona todos los productos de MongoDB a Redis.
-        /// </summary>
-        /// <returns>
-        /// Tarea que representa la operación asincrónica.
-        /// </returns>
-        public async Task ClonarProductosMongoARedisAsync()
-        {
-            // Obtiene todos los productos de MongoDB
-            var productos = await _productosCollection.Find(_ => true).ToListAsync();
-
-            // Por cada producto, crea un hash en Redis con la clave "productos:{id}"
-            foreach (var producto in productos)
-            {
-                var key = $"productos:{producto.Id}";
-
-                // Convierte el producto a un diccionario de campos
-                var dict = new Dictionary<string, string>
-            {
-                { "Id", producto.Id },
-                { "Titulo", producto.Titulo },
-                { "Precio", producto.Precio.ToString() },
-                { "Cantidad", producto.Cantidad.ToString() },
-                { "Descripcion", producto.Descripcion },
-                { "Stock", producto.Stock.ToString() },
-                { "Fecha", producto.Fecha.ToString("o") },
-                { "Rating", producto.Rating.ToString() },
-                { "Likes", producto.Likes.ToString() },
-                { "Dislikes", producto.Dislikes.ToString() },
-                // Serializa listas y ObjectId a JSON para almacenarlas como string
-                { "Imagenes", JsonSerializer.Serialize(producto.Imagenes) },
-                { "Categoria", producto.Categoria.ToString() },
-                { "Plataformas", JsonSerializer.Serialize(producto.Plataformas) },
-                { "Etiquetas", JsonSerializer.Serialize(producto.Etiquetas) }
-            };
-
-                // Convierte el diccionario a HashEntry[]
-                var hashEntries = dict.Select(kv => new StackExchange.Redis.HashEntry(kv.Key, kv.Value)).ToArray();
-
-                // Guarda el hash en Redis
-                await _redisDatabase.HashSetAsync(key, hashEntries);
-            }
-        }
-
-        public async Task<List<Producto>> GetAllProductsFromRedisAsync()
-        {
-            var server = _redisDatabase.Multiplexer.GetServer(_redisDatabase.Multiplexer.GetEndPoints().First());
-            var keys = server.Keys(pattern: "productos:*");
-
-            var productos = new List<Producto>();
-            foreach (var key in keys)
-            {
-                // Obtiene todos los campos del hash del producto
-                var hashEntries = await _redisDatabase.HashGetAllAsync(key);
-                if (hashEntries.Length > 0)
-                {
-                    // Convierte el hash a un diccionario
-                    var dict = hashEntries.ToDictionary(
-                        entry => entry.Name.ToString(),
-                        entry => entry.Value.ToString()
-                    );
-
-                    var producto = new Producto
-                    {
-                        Id = dict.TryGetValue("Id", out string? idValue) ? idValue : "",
-                        Titulo = dict.TryGetValue("Titulo", out string? tituloValue) ? tituloValue : "",
-                        Precio = dict.TryGetValue("Precio", out string? precioStr) && decimal.TryParse(precioStr, out decimal precioValue) ? precioValue : 0,
-                        Cantidad = dict.TryGetValue("Cantidad", out string? cantidadStr) && int.TryParse(cantidadStr, out int cantidadValue) ? cantidadValue : 0,
-                        Descripcion = dict.TryGetValue("Descripcion", out string? descripcionValue) ? descripcionValue : "",
-                        Imagenes = dict.TryGetValue("Imagenes", out string? imagenesValue) && !string.IsNullOrEmpty(imagenesValue)
-                            ? JsonSerializer.Deserialize<List<string>>(imagenesValue) ?? new List<string>()
-                            : new List<string>(),
-                        Categoria = dict.TryGetValue("Categoria", out string? categoriaValue) ? categoriaValue : "",
-                        Plataformas = dict.TryGetValue("Plataformas", out string? plataformasValue) && !string.IsNullOrEmpty(plataformasValue)
-                            ? JsonSerializer.Deserialize<List<string>>(plataformasValue) ?? []
-                            : [],
-                        Stock = dict.TryGetValue("Stock", out string? stockStr) && int.TryParse(stockStr, out int stockValue) ? stockValue : 0,
-                        Fecha = dict.TryGetValue("Fecha", out string? fechaStr) && DateTime.TryParse(fechaStr, out DateTime fechaValue) ? fechaValue : DateTime.MinValue,
-                        Rating = dict.TryGetValue("Rating", out string? ratingStr) && int.TryParse(ratingStr, out int ratingValue) ? ratingValue : 0,
-                        Likes = dict.TryGetValue("Likes", out string? likesStr) && int.TryParse(likesStr, out int likesValue) ? likesValue : 0,
-                        Dislikes = dict.TryGetValue("Dislikes", out string? dislikesStr) && int.TryParse(dislikesStr, out int dislikesValue) ? dislikesValue : 0,
-                        Etiquetas = dict.TryGetValue("Etiquetas", out string? etiquetasValue) && !string.IsNullOrEmpty(etiquetasValue)
-                            ? JsonSerializer.Deserialize<List<string>>(etiquetasValue) ?? []
-                            : []
-                    };
-
-                    productos.Add(producto);
-                }
-            }
-
-            return productos;
-        }
-
-
-
-
-
-
-
-        /// <summary>
-        /// Busca coincidencias de una cadena en el título usando Redis.
+        /// Busca coincidencias de una cadena en el título usando MongoDB.
         /// </summary>
         public async Task<List<Producto>> SearchByTituloAsync(string search)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return [.. productosRedis.Where(p => p.Titulo != null && p.Titulo.ToLower().Contains(search.ToLower()))];
+            var filter = Builders<Producto>.Filter.Regex(p => p.Titulo, new MongoDB.Bson.BsonRegularExpression(search, "i"));
+            return await _productosCollection.Find(filter).ToListAsync();
         }
 
         /// <summary>
-        /// Obtiene productos por un array de ids usando Redis.
+        /// Obtiene productos por un array de ids usando MongoDB.
         /// </summary>
         public async Task<List<Producto>> GetByIdsAsync(IEnumerable<string> ids)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return [.. productosRedis.Where(p => ids.Contains(p.Id))];
+            var filter = Builders<Producto>.Filter.In(p => p.Id, ids);
+            return await _productosCollection.Find(filter).ToListAsync();
         }
 
         /// <summary>
-        /// Obtiene productos por categoría usando Redis.
+        /// Obtiene productos por categoría usando MongoDB.
         /// </summary>
         public async Task<List<Producto>> GetByCategoriaAsync(string categoria)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return [.. productosRedis.Where(p => p.Categoria == categoria)];
+            var filter = Builders<Producto>.Filter.Eq(p => p.Categoria, categoria);
+            return await _productosCollection.Find(filter).ToListAsync();
         }
 
         /// <summary>
-        /// Obtiene productos por plataforma usando Redis.
+        /// Obtiene productos por plataforma usando MongoDB.
         /// </summary>
         public async Task<List<Producto>> GetByPlataformaAsync(string plataforma)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return [.. productosRedis.Where(p => p.Plataformas != null && p.Plataformas.Contains(plataforma))];
+            var filter = Builders<Producto>.Filter.AnyEq(p => p.Plataformas, plataforma);
+            return await _productosCollection.Find(filter).ToListAsync();
         }
 
-
         /// <summary>
-        /// Obtiene productos por rango de precio usando Redis.
+        /// Obtiene productos por rango de precio usando MongoDB.
         /// </summary>
         public async Task<List<Producto>> GetByRangoPrecioAsync(decimal min, decimal max)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return [.. productosRedis.Where(p => p.Precio >= min && p.Precio <= max)];
+            var filter = Builders<Producto>.Filter.Gte(p => p.Precio, min) &
+                         Builders<Producto>.Filter.Lte(p => p.Precio, max);
+            return await _productosCollection.Find(filter).ToListAsync();
         }
 
-
         /// <summary>
-        /// Obtiene un producto por id usando Redis.
+        /// Obtiene un producto por id usando MongoDB.
         /// </summary>
         public async Task<Producto> GetByIdAsync(string id)
         {
-            var productosRedis = await GetAllProductsFromRedisAsync();
-            return productosRedis.FirstOrDefault(p => p.Id == id)!;
+            var filter = Builders<Producto>.Filter.Eq(p => p.Id, id);
+            return await _productosCollection.Find(filter).FirstOrDefaultAsync();
         }
+
+        // ...existing code for ZSETs de productosMetricas...
+
+        // El resto de la lógica de métricas (likes, dislikes, ranking) sigue usando Redis ZSETs
+        // ...existing code...
 
 
 
@@ -352,7 +269,7 @@ namespace sendbol_videoshop.Server.Services
 
             await SincronizarRatingRedisAsync(); // Asegura que Redis tenga los datos
                                                  // Obtiene los IDs de los productos ordenados por rating descendente desde Redis
-            
+
 
             var ids = await _redisDatabase.SortedSetRangeByScoreAsync(
                 "productosMetricas:ranking",
@@ -426,16 +343,16 @@ namespace sendbol_videoshop.Server.Services
                 .Take(cantidad)
                 .ToList();
 
-                // ...existing code...
-                // ...existing code...
-                var idList = productosDiff
-                    .Select(x => x.Id)
-                    .Where(id => !string.IsNullOrEmpty(id) && id != "undefined")
-                    .ToList();
-                
-                var productos = await _productosCollection.Find(p => idList.Contains(p.Id)).ToListAsync();
-                // ...existing code...
-                // ...existing code...
+            // ...existing code...
+            // ...existing code...
+            var idList = productosDiff
+                .Select(x => x.Id)
+                .Where(id => !string.IsNullOrEmpty(id) && id != "undefined")
+                .ToList();
+
+            var productos = await _productosCollection.Find(p => idList.Contains(p.Id)).ToListAsync();
+            // ...existing code...
+            // ...existing code...
 
             // Ordena los productos según el orden de los IDs obtenidos
             var productosOrdenados = idList
@@ -463,25 +380,25 @@ namespace sendbol_videoshop.Server.Services
         {
             var filterBuilder = Builders<Producto>.Filter;
             var filter = filterBuilder.Empty;
-        
+
             if (!string.IsNullOrEmpty(categoria))
                 filter &= filterBuilder.Eq(p => p.Categoria, categoria);
-        
+
             if (!string.IsNullOrEmpty(plataforma))
                 filter &= filterBuilder.AnyEq(p => p.Plataformas, plataforma);
-        
+
             if (min.HasValue)
                 filter &= filterBuilder.Gte(p => p.Precio, min.Value);
-        
+
             if (max.HasValue)
                 filter &= filterBuilder.Lte(p => p.Precio, max.Value);
-        
+
             // Si el ordenamiento es por ranking o likes, usa Redis para obtener el orden
             if (!string.IsNullOrEmpty(sortBy) && (sortBy.ToLower() == "ranking" || sortBy.ToLower() == "likes"))
             {
                 //bool desc = sortOrder?.ToLower() == "desc";
                 List<Producto> productosOrdenados;
-        
+
                 if (sortBy.Equals("ranking", StringComparison.CurrentCultureIgnoreCase))
                 {
                     // Puedes ajustar la cantidad máxima si lo deseas
@@ -493,7 +410,7 @@ namespace sendbol_videoshop.Server.Services
                     var productosLikes = await GetProductosPorLikesDescAsync(5000, sortOrder ?? false);
                     productosOrdenados = productosLikes;
                 }
-        
+
                 // Aplica los filtros sobre la lista ordenada
                 var productosFiltrados = productosOrdenados
                     .Where(p =>
@@ -503,29 +420,29 @@ namespace sendbol_videoshop.Server.Services
                         (!max.HasValue || p.Precio <= max.Value)
                     )
                     .ToList();
-        
-        
+
+
                 return productosFiltrados;
             }
             else
             {
                 // Ordenamiento tradicional en memoria para otros campos
                 var productos = await _productosCollection.Find(filter).ToListAsync();
-        
+
                 if (!string.IsNullOrEmpty(sortBy))
                 {
-                    
+
                     productos = sortBy.ToLower() switch
                     {
                         "precio" => sortOrder.GetValueOrDefault() ? productos.OrderByDescending(p => p.Precio).ToList() : productos.OrderBy(p => p.Precio).ToList(),
                         _ => productos
                     };
                 }
-        
+
                 return productos;
             }
         }
-        
+
 
 
 

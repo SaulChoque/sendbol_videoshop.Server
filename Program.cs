@@ -63,7 +63,7 @@ var app = builder.Build();
 
 
 app.UseCors(options =>
-options.WithOrigins("https://localhost:54993","http://localhost:54993", "http://0.0.0.0:54993")
+options.WithOrigins("https://localhost:54993","http://localhost:54993", "http://0.0.0.0:54993", "https://26.211.167.41:54993")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials() // <-- Esto es necesario
