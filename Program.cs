@@ -33,6 +33,8 @@ builder.Services.AddSingleton<PlataformasService>();
 
 builder.Services.AddSingleton<CountriesService>();
 
+
+
 // Configurar Redis como almacenamiento de sesiones
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -61,7 +63,7 @@ var app = builder.Build();
 
 
 app.UseCors(options =>
-options.WithOrigins("https://localhost:54993","http://localhost:54993")
+options.WithOrigins("https://localhost:54993","http://localhost:54993", "http://0.0.0.0:54993")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials() // <-- Esto es necesario

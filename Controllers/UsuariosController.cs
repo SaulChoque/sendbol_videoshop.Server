@@ -120,6 +120,9 @@ namespace sendbol_videoshop.Server.Controllers
         
             return Ok(usuario);
         }
+
+
+        
         
         // Endpoint para dar like a un producto
         [HttpPost("{usuarioId}/like")]

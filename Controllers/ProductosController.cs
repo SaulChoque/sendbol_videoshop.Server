@@ -60,16 +60,24 @@ namespace sendbol_videoshop.Server.Controllers
         /// </summary>
         /// <param name="cantidad">Cantidad máxima de productos a devolver.</param>
         [HttpGet("top-ranking")]
-        public async Task<List<Producto>> GetTopRanking([FromQuery] int cantidad = 10)
-            => await _ProductosService.GetProductosPorRatingDescAsync(cantidad);
+        public async Task<List<Producto>> GetTopRanking(
+            [FromQuery] int cantidad = 10,
+            [FromQuery] bool sortOrder = false
+            )
+            => await _ProductosService.GetProductosPorRatingDescAsync(cantidad, sortOrder);
 
         /// <summary>
         /// Obtiene los productos ordenados de mayor a menor por (likes - dislikes).
         /// </summary>
         /// <param name="cantidad">Cantidad máxima de productos a devolver.</param>
         [HttpGet("top-likes")]
-        public async Task<List<Producto>> GetTopLikes([FromQuery] int cantidad = 10)
-            => await _ProductosService.GetProductosPorLikesDescAsync(cantidad);
+
+
+        public async Task<List<Producto>> GetTopLikes(
+            [FromQuery] int cantidad = 10,
+            [FromQuery] bool sortOrder = false
+            )
+            => await _ProductosService.GetProductosPorLikesDescAsync(cantidad, sortOrder);
 
         // ...existing code...
 
@@ -82,7 +90,7 @@ namespace sendbol_videoshop.Server.Controllers
             await _ProductosService.UpdateRatingAsync(id, dto.Rating);
             return Ok(new { message = "Rating actualizado en Redis." });
         }
-        
+
         /// <summary>
         /// Actualiza los likes y dislikes de un producto en Redis.
         /// </summary>
@@ -93,6 +101,20 @@ namespace sendbol_videoshop.Server.Controllers
             return Ok(new { message = "Likes y dislikes actualizados en Redis." });
         }
 
+
+        // ...existing code...
+        [HttpGet("filtrar")]
+        public async Task<List<Producto>> Filtrar(
+            [FromQuery] string? categoria,
+            [FromQuery] string? plataforma,
+            [FromQuery] decimal? min,
+            [FromQuery] decimal? max,
+            [FromQuery] string? sortBy,
+            [FromQuery] bool? sortOrder // "asc" o "desc"
+        )
+        {
+            return await _ProductosService.FiltrarProductosAsync(categoria, plataforma, min, max, sortBy, sortOrder ?? false);
+        }
 
 
 
