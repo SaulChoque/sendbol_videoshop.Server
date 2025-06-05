@@ -11,7 +11,7 @@ public class MongoVideoshopDatabaseSettings
 
     
     public string CategoriasCollectionName { get; set; } = null!;
-    public string ChiptagsCollectionName { get; set; } = null!;
+    public string EtiquetasCollectionName { get; set; } = null!;
     public string PlataformasCollectionName { get; set; } = null!;
 }
 

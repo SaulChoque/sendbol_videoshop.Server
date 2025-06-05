@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace sendbol_videoshop.Server.Models
 {
-    public class Chiptags
+    public class Etiquetas
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -15,7 +15,7 @@ namespace sendbol_videoshop.Server.Models
         public string Tag { get; set; }
 
 
-        public Chiptags()
+        public Etiquetas()
         {
             Id = ObjectId.GenerateNewId().ToString();
             Tag = "";

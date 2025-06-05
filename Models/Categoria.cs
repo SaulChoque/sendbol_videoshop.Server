@@ -15,15 +15,15 @@ namespace sendbol_videoshop.Server.Models
         public string Titulo { get; set; }
 
 
-        [BsonElement("chiptags")]
+        [BsonElement("etiquetas")]
         [BsonRepresentation(BsonType.ObjectId)]
-        public List<string> Chiptags { get; set; }
+        public List<string> Etiquetas { get; set; }
 
         public Categoria()
         {
             Id = ObjectId.GenerateNewId().ToString();
             Titulo = "";
-            Chiptags = new List<string>();
+            Etiquetas = new List<string>();
         }
     }
 }

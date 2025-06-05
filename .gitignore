@@ -53,3 +53,16 @@ docker-compose.override.yml
 
 # Archivos de configuración de IIS Express
 .vsconfig
+
+
+# ...existing code...
+
+# Configuración de la aplicación (NO versionar archivos sensibles)
+appsettings.json
+appsettings.Development.json
+
+# ...existing code...
+appsettings.Development.json
+appsettings.json
+appsettings.json
+appsettings.Development.json

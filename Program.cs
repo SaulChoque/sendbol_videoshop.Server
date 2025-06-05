@@ -27,7 +27,7 @@ builder.Services.Configure<RedisVideoshopDatabaseSettings>(
 builder.Services.AddSingleton<UsuariosService>();
 builder.Services.AddSingleton<ProductosService>();
 builder.Services.AddSingleton<CategoriasService>();
-builder.Services.AddSingleton<ChiptagsService>();
+builder.Services.AddSingleton<EtiquetasService>();
 builder.Services.AddSingleton<PlataformasService>();
 
 
@@ -63,7 +63,7 @@ var app = builder.Build();
 
 
 app.UseCors(options =>
-options.WithOrigins("https://localhost:54993","http://localhost:54993", "http://0.0.0.0:54993", "https://26.211.167.41:54993")
+options.WithOrigins("https://localhost:54993","http://localhost:54993", "http://0.0.0.0:54993", "https://26.211.167.41:54993", "https://192.168.137.1:54993", "http://192.168.137.1:54993")
     .AllowAnyMethod()
     .AllowAnyHeader()
     .AllowCredentials() // <-- Esto es necesario

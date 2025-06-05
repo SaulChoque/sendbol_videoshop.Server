@@ -34,6 +34,29 @@ namespace sendbol_videoshop.Server.Services
             _redisDatabase = redis.GetDatabase();
         }
 
+  
+
+public class ConnectBasicExample
+    {
+
+        public void run()
+        {
+            var muxer = ConnectionMultiplexer.Connect(
+                new ConfigurationOptions
+                {
+                    EndPoints = { { "redis-17335.c336.samerica-east1-1.gce.redns.redis-cloud.com", 17335 } },
+                    User = "default",
+                    Password = "qE6qc3mD0cMQKqg7co34HoBvUCvYDQTi"
+                }
+            );
+            var db = muxer.GetDatabase();
+
+            db.StringSet("foo", "bar");
+            RedisValue result = db.StringGet("foo");
+            Console.WriteLine(result); // >>> bar
+
+        }
+}
 
 
 
@@ -69,7 +92,7 @@ namespace sendbol_videoshop.Server.Services
                 {
                     { "Id", categoria.Id },
                     { "Titulo", categoria.Titulo }, // Asegúrate que el modelo usa "Titulo"
-                    { "Chiptags", JsonSerializer.Serialize(categoria.Chiptags) } // Usa "Chiptags" igual que en el modelo
+                    { "Etiquetas", JsonSerializer.Serialize(categoria.Etiquetas) } // Usa "Etiquetas" igual que en el modelo
                 };
 
                 var hashEntries = dict.Select(kv => new HashEntry(kv.Key, kv.Value)).ToArray();
@@ -102,8 +125,8 @@ namespace sendbol_videoshop.Server.Services
                     {
                         Id = dict.TryGetValue("Id", out string? idValue) ? idValue : "",
                         Titulo = dict.TryGetValue("Titulo", out string? tituloValue) ? tituloValue : "",
-                        Chiptags = dict.TryGetValue("Chiptags", out string? chiptagsValue) && !string.IsNullOrEmpty(chiptagsValue)
-                            ? JsonSerializer.Deserialize<List<string>>(chiptagsValue) ?? []
+                        Etiquetas = dict.TryGetValue("Etiquetas", out string? etiquetasValue) && !string.IsNullOrEmpty(etiquetasValue)
+                            ? JsonSerializer.Deserialize<List<string>>(etiquetasValue) ?? []
                             : []
                     };
             
@@ -131,8 +154,8 @@ namespace sendbol_videoshop.Server.Services
                 {
                     Id = dict.TryGetValue("Id", out string? idValue) ? idValue : "",
                     Titulo = dict.TryGetValue("Titulo", out string? tituloValue) ? tituloValue : "",
-                    Chiptags = dict.TryGetValue("Chiptags", out string? chiptagsValue) && !string.IsNullOrEmpty(chiptagsValue)
-                        ? JsonSerializer.Deserialize<List<string>>(chiptagsValue) ?? []
+                    Etiquetas = dict.TryGetValue("Etiquetas", out string? etiquetasValue) && !string.IsNullOrEmpty(etiquetasValue)
+                        ? JsonSerializer.Deserialize<List<string>>(etiquetasValue) ?? []
                         : []
                 };
                 return categoria;

@@ -6,12 +6,12 @@ using System.Text.Json;
 
 namespace sendbol_videoshop.Server.Services
 {
-    public class ChiptagsService
+    public class EtiquetasService
     {
-        private readonly IMongoCollection<Chiptags> _chiptagsCollection;
+        private readonly IMongoCollection<Etiquetas> _etiquetasCollection;
         private readonly IDatabase _redisDatabase;
 
-        public ChiptagsService(
+        public EtiquetasService(
             IOptions<MongoVideoshopDatabaseSettings> videoshopDatabaseSettings,
             IOptions<RedisVideoshopDatabaseSettings> redisVideoshopDatabaseSettings
         )
@@ -22,8 +22,8 @@ namespace sendbol_videoshop.Server.Services
             var mongoDatabase = mongoClient.GetDatabase(
                 videoshopDatabaseSettings.Value.DatabaseName);
 
-            _chiptagsCollection = mongoDatabase.GetCollection<Chiptags>(
-                videoshopDatabaseSettings.Value.ChiptagsCollectionName);
+            _etiquetasCollection = mongoDatabase.GetCollection<Etiquetas>(
+                videoshopDatabaseSettings.Value.EtiquetasCollectionName);
 
             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
                 redisVideoshopDatabaseSettings.Value.ConnectionString
@@ -32,34 +32,34 @@ namespace sendbol_videoshop.Server.Services
         }
 
         /// <summary>
-        /// Obtiene todos los chiptags usando Redis como caché.
+        /// Obtiene todos los etiquetas usando Redis como caché.
         /// Si no existen en Redis, los clona desde MongoDB.
         /// </summary>
-        public async Task<List<Chiptags>> GetAllAsync()
+        public async Task<List<Etiquetas>> GetAllAsync()
         {
-            var chiptagsRedis = await GetAllChiptagsFromRedisAsync();
-            if (chiptagsRedis.Count != 0)
-                return chiptagsRedis;
+            var etiquetasRedis = await GetAllEtiquetasFromRedisAsync();
+            if (etiquetasRedis.Count != 0)
+                return etiquetasRedis;
 
-            await ClonarChiptagsMongoARedisAsync();
-            chiptagsRedis = await GetAllChiptagsFromRedisAsync();
-            return chiptagsRedis;
+            await ClonarEtiquetasMongoARedisAsync();
+            etiquetasRedis = await GetAllEtiquetasFromRedisAsync();
+            return etiquetasRedis;
         }
 
         /// <summary>
-        /// Clona todos los chiptags de MongoDB a Redis.
+        /// Clona todos los etiquetas de MongoDB a Redis.
         /// </summary>
-        public async Task ClonarChiptagsMongoARedisAsync()
+        public async Task ClonarEtiquetasMongoARedisAsync()
         {
-            var chiptags = await _chiptagsCollection.Find(_ => true).ToListAsync();
+            var etiquetas = await _etiquetasCollection.Find(_ => true).ToListAsync();
 
-            foreach (var chiptag in chiptags)
+            foreach (var etiqueta in etiquetas)
             {
-                var key = $"chiptags:{chiptag.Id}";
+                var key = $"etiquetas:{etiqueta.Id}";
                 var dict = new Dictionary<string, string>
                 {
-                    { "Id", chiptag.Id },
-                    { "Tag", chiptag.Tag }
+                    { "Id", etiqueta.Id },
+                    { "Tag", etiqueta.Tag }
                 };
 
                 var hashEntries = dict.Select(kv => new HashEntry(kv.Key, kv.Value)).ToArray();
@@ -68,14 +68,14 @@ namespace sendbol_videoshop.Server.Services
         }
 
         /// <summary>
-        /// Obtiene todos los chiptags desde Redis.
+        /// Obtiene todos los etiquetas desde Redis.
         /// </summary>
-        public async Task<List<Chiptags>> GetAllChiptagsFromRedisAsync()
+        public async Task<List<Etiquetas>> GetAllEtiquetasFromRedisAsync()
         {
             var server = _redisDatabase.Multiplexer.GetServer(_redisDatabase.Multiplexer.GetEndPoints().First());
-            var keys = server.Keys(pattern: "chiptags:*");
+            var keys = server.Keys(pattern: "etiquetas:*");
 
-            var chiptagsList = new List<Chiptags>();
+            var etiquetasList = new List<Etiquetas>();
             foreach (var key in keys)
             {
                 var hashEntries = await _redisDatabase.HashGetAllAsync(key);
@@ -85,24 +85,24 @@ namespace sendbol_videoshop.Server.Services
                         entry => entry.Name.ToString(),
                         entry => entry.Value.ToString()
                     );
-                    var chiptag = new Chiptags
+                    var etiqueta = new Etiquetas
                     {
                         Id = dict.TryGetValue("Id", out string? idValue) ? idValue : "",
                         Tag = dict.TryGetValue("Tag", out string? tagValue) ? tagValue : ""
                     };
 
-                    chiptagsList.Add(chiptag);
+                    etiquetasList.Add(etiqueta);
                 }
             }
-            return chiptagsList;
+            return etiquetasList;
         }
 
         /// <summary>
-        /// Obtiene un chiptags por id usando Redis.
+        /// Obtiene un etiquetas por id usando Redis.
         /// </summary>
-        public async Task<Chiptags?> GetByIdAsync(string id)
+        public async Task<Etiquetas?> GetByIdAsync(string id)
         {
-            var key = $"chiptags:{id}";
+            var key = $"etiquetas:{id}";
             var hashEntries = await _redisDatabase.HashGetAllAsync(key);
             if (hashEntries.Length > 0)
             {
@@ -111,11 +111,11 @@ namespace sendbol_videoshop.Server.Services
                     entry => entry.Value.ToString()
                 );
                 var json = JsonSerializer.Serialize(dict);
-                return JsonSerializer.Deserialize<Chiptags>(json);
+                return JsonSerializer.Deserialize<Etiquetas>(json);
             }
             /*
             // Si no está en Redis, intenta clonar y buscar de nuevo
-            await ClonarChiptagsMongoARedisAsync();
+            await ClonarEtiquetasMongoARedisAsync();
             hashEntries = await _redisDatabase.HashGetAllAsync(key);
             if (hashEntries.Length > 0)
             {
@@ -124,19 +124,19 @@ namespace sendbol_videoshop.Server.Services
                     entry => entry.Value.ToString()
                 );
                 var json = JsonSerializer.Serialize(dict);
-                return JsonSerializer.Deserialize<Chiptags>(json);
+                return JsonSerializer.Deserialize<Etiquetas>(json);
             }
             */
             return null;
         }
 
         /// <summary>
-        /// Busca chiptags por tag usando Redis.
+        /// Busca etiquetas por tag usando Redis.
         /// </summary>
-        public async Task<List<Chiptags>> SearchByTagAsync(string search)
+        public async Task<List<Etiquetas>> SearchByTagAsync(string search)
         {
-            var chiptagsRedis = await GetAllChiptagsFromRedisAsync();
-            return [.. chiptagsRedis.Where(c => c.Tag != null && c.Tag.Contains(search, StringComparison.CurrentCultureIgnoreCase))];
+            var etiquetasRedis = await GetAllEtiquetasFromRedisAsync();
+            return [.. etiquetasRedis.Where(c => c.Tag != null && c.Tag.Contains(search, StringComparison.CurrentCultureIgnoreCase))];
         }
     }
 }
