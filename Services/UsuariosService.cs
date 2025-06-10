@@ -1,6 +1,7 @@
 ﻿using sendbol_videoshop.Server.Models; // Importa los modelos definidos en la carpeta Models.
 using Microsoft.Extensions.Options; // Proporciona acceso a configuraciones fuertemente tipadas.
 using MongoDB.Driver; // Biblioteca para interactuar con MongoDB.
+using BCrypt.Net; // Agrega esto al inicio del archivo
 
 namespace sendbol_videoshop.Server.Services
 {
@@ -28,13 +29,16 @@ namespace sendbol_videoshop.Server.Services
                 VideoshopDatabaseSettings.Value.UsuariosCollectionName);
         }
 
+
         // Método para obtener todos los usuarios de la colección.
         public async Task<List<Usuario>> GetAsync() =>
             await _usuariosCollection.Find(_ => true).ToListAsync(); // Devuelve todos los documentos.
 
+
         // Método para obtener un usuario específico por su ID.
         public async Task<Usuario?> GetAsync(string id) =>
             await _usuariosCollection.Find(x => x.Id == id).FirstOrDefaultAsync(); // Busca el primer documento que coincida con el ID.        
+
 
         // Método para verificar si existe un usuario con el correo proporcionado.
         public async Task<bool> ExistsByCorreoAsync(string correo) =>
@@ -42,23 +46,36 @@ namespace sendbol_videoshop.Server.Services
 
 
         // Método para crear un nuevo usuario en la colección.
-        public async Task CreateAsync(Usuario newUsuario) =>
-            await _usuariosCollection.InsertOneAsync(newUsuario); // Inserta un nuevo documento.
+        public async Task CreateAsync(Usuario newUsuario)
+        {
+            // Hashea la contraseña antes de guardar
+            newUsuario.Contrasena = BCrypt.Net.BCrypt.HashPassword(newUsuario.Contrasena);
+            await _usuariosCollection.InsertOneAsync(newUsuario);
+        }
+
 
         // Método para actualizar un usuario existente por su ID.
         public async Task UpdateAsync(string id, Usuario updatedUsuario) =>
             await _usuariosCollection.ReplaceOneAsync(x => x.Id == id, updatedUsuario); // Reemplaza el documento que coincida con el ID.
 
+
         // Método para eliminar un usuario de la colección por su ID.
         public async Task RemoveAsync(string id) =>
             await _usuariosCollection.DeleteOneAsync(x => x.Id == id); // Elimina el documento que coincida con el ID.
 
-        // Método para obtener un usuario por correo y contraseña
+        // Método para obtener un usuario por correo y contraseña (usando hash)
         public async Task<Usuario?> GetByCorreoYPasswordAsync(string correo, string contrasena)
         {
-            return await _usuariosCollection
-                .Find(x => x.Correo == correo && x.Contrasena == contrasena)
+            // Busca el usuario por correo
+            var usuario = await _usuariosCollection
+                .Find(x => x.Correo == correo)
                 .FirstOrDefaultAsync();
+        
+            // Si no existe el usuario o la contraseña no coincide, retorna null
+            if (usuario == null || !BCrypt.Net.BCrypt.Verify(contrasena, usuario.Contrasena))
+                return null;
+        
+            return usuario;
         }
 
         // ...existing code...

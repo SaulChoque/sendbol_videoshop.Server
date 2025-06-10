@@ -2,9 +2,12 @@
 {
     public class RedisVideoshopDatabaseSettings
     {
-        public string ConnectionString { get; set; } = null!;
+        public string Endpoints { get; set; } = null!;
 
-        public string port { get; set; } = null!;
+        public string Port { get; set; } = null!;
+
+        public string User { get; set; } = null!;
+        public string Password { get; set; } = null!;
 
     }
 }

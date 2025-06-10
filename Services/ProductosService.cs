@@ -30,10 +30,39 @@ namespace sendbol_videoshop.Server.Services
             var mongoDatabase = mongoClient.GetDatabase(
                 VideoshopDatabaseSettings.Value.DatabaseName);
 
+            // Imprime la configuración de Redis para depuración
+            Console.WriteLine("Configuración de Redis:");
+            Console.WriteLine(redisVideoshopDatabaseSettings.Value.Endpoints);
+            Console.WriteLine(redisVideoshopDatabaseSettings.Value.Port);
+            Console.WriteLine(redisVideoshopDatabaseSettings.Value.User);
+            Console.WriteLine(redisVideoshopDatabaseSettings.Value.Password);
+
             // Crea una conexión a Redis utilizando la cadena de conexión proporcionada
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
-                redisVideoshopDatabaseSettings.Value.ConnectionString
+            var config = new ConfigurationOptions
+            {
+                User = redisVideoshopDatabaseSettings.Value.User,
+                Password = redisVideoshopDatabaseSettings.Value.Password
+            };
+            config.EndPoints.Add(redisVideoshopDatabaseSettings.Value.Endpoints, int.Parse(redisVideoshopDatabaseSettings.Value.Port));
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(config);
+
+
+            /*
+             *             ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
+                new ConfigurationOptions
+                {
+                    EndPoints = { { "redis-17335.c336.samerica-east1-1.gce.redns.redis-cloud.com", 17335 } },
+                    User = "default",
+                    Password = "qE6qc3mD0cMQKqg7co34HoBvUCvYDQTi"
+                }
             );
+             * 
+             Configuración de Redis:
+redis-17335.c336.samerica-east1-1.gce.redns.redis-cloud.com
+17335
+default
+qE6qc3mD0cMQKqg7co34HoBvUCvYDQTi
+             */
 
             // Obtiene la colección de Productos dentro de la base de datos.
             _productosCollection = mongoDatabase.GetCollection<Producto>(

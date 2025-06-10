@@ -25,9 +25,15 @@ namespace sendbol_videoshop.Server.Services
             _etiquetasCollection = mongoDatabase.GetCollection<Etiquetas>(
                 videoshopDatabaseSettings.Value.EtiquetasCollectionName);
 
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
-                redisVideoshopDatabaseSettings.Value.ConnectionString
-            );
+            var config = new ConfigurationOptions
+            {
+                User = redisVideoshopDatabaseSettings.Value.User,
+                Password = redisVideoshopDatabaseSettings.Value.Password
+            };
+            config.EndPoints.Add(redisVideoshopDatabaseSettings.Value.Endpoints, int.Parse(redisVideoshopDatabaseSettings.Value.Port));
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(config);
+
+
             _redisDatabase = redis.GetDatabase();
         }
 

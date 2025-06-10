@@ -122,7 +122,12 @@ namespace sendbol_videoshop.Server.Controllers
         }
 
 
-        
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("UsuarioId");
+            return Ok(new { message = "Sesión cerrada" });
+        }
         
         // Endpoint para dar like a un producto
         [HttpPost("{usuarioId}/like")]

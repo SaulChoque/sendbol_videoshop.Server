@@ -28,35 +28,17 @@ namespace sendbol_videoshop.Server.Services
             _categoriasCollection = mongoDatabase.GetCollection<Categoria>(
                 videoshopDatabaseSettings.Value.CategoriasCollectionName);
 
-            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(
-                redisVideoshopDatabaseSettings.Value.ConnectionString
-            );
+            var config = new ConfigurationOptions
+            {
+                User = redisVideoshopDatabaseSettings.Value.User,
+                Password = redisVideoshopDatabaseSettings.Value.Password
+            };
+            config.EndPoints.Add(redisVideoshopDatabaseSettings.Value.Endpoints, int.Parse(redisVideoshopDatabaseSettings.Value.Port));
+            ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(config);
             _redisDatabase = redis.GetDatabase();
         }
 
   
-
-public class ConnectBasicExample
-    {
-
-        public void run()
-        {
-            var muxer = ConnectionMultiplexer.Connect(
-                new ConfigurationOptions
-                {
-                    EndPoints = { { "redis-17335.c336.samerica-east1-1.gce.redns.redis-cloud.com", 17335 } },
-                    User = "default",
-                    Password = "qE6qc3mD0cMQKqg7co34HoBvUCvYDQTi"
-                }
-            );
-            var db = muxer.GetDatabase();
-
-            db.StringSet("foo", "bar");
-            RedisValue result = db.StringGet("foo");
-            Console.WriteLine(result); // >>> bar
-
-        }
-}
 
 
 
